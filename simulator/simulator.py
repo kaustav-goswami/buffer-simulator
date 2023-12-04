@@ -31,6 +31,8 @@ class Simulator:
         self._packet_queue = []
         self._live_traffic_queue = []
         self._debug = debug
+        self._buffering_length = 1
+        self._buffer_push_counter = 0
         self._comm_flag = False
     
     def _check_for_events(self, current_tick):
@@ -53,12 +55,12 @@ class Simulator:
                                                    buffer=self._sender,
                                                    time=packets.enqueue_time,
                                                    packet=packets))
-                # Every push request is paired with a pop.
-                new_events_to_queue.append(EventV3(idx=packets._idx,
-                                                   command="pop",
-                                                   buffer=self._sender,
-                                                   time=packets.process_time+current_tick,
-                                                   packet=packets))
+                # [NO] Every push request is paired with a pop.
+                # new_events_to_queue.append(EventV3(idx=packets._idx,
+                #                                    command="pop",
+                #                                    buffer=self._sender,
+                #                                    time=packets.process_time+current_tick,
+                #                                    packet=packets))
                 
                 self._packet_queue.remove(packets)
         if len(self._live_traffic_queue) > 0:
@@ -108,10 +110,11 @@ class Simulator:
         # we create one more packet so taht we can start the communication.
         # this is a pop packet.
         self.event_queue.append(EventV3(idx=-1,
-                                    command="comm",
+                                    command="pop",
                                     buffer=self._sender,
                                     time=self._packet_queue[0].enqueue_time,
                                     packet=None))
+        print()
     
     def simulate(self, length: int = None):
         """:params:
@@ -158,10 +161,10 @@ class Simulator:
                 for events in events_to_process:
                     if self._debug == True:
                         print(f"sim: {current_tick} found event {events._idx} with command {events._command}", end=" ")
-                        if events._command != "comm":
-                            print(f"for packet {events._packet._idx}")
-                        else:
-                            print()
+                        # if events._command != "comm":
+                        #     print(f"for packet {events._packet._idx}")
+                        # else:
+                        #     print()
                     event_monitor = events.process_event()
                     if event_monitor[0] == False:
                         self.simulation_stats["status"] = False

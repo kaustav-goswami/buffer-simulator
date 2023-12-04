@@ -27,6 +27,10 @@ def main(ticks_resolution: int, sender: Buffer, receiver: Buffer,
                         length=len(secret_message), params={"lambda": 1},
                         simulator_quantum=ticks_resolution,
                         message=secret_message)
+    # the incorrect assumption that i had was that we pushg these packets into
+    # the buffer and wait for process_time to pop. however, these packets are
+    # already processed. we just need to push them into the buffer and then
+    # start popping as per the interpacket arrival times.
     encoded_message = encoder.create_packets()
     # The simulator has to atleast simulate these packets. we can add a live
     # traffic source if we want too.
