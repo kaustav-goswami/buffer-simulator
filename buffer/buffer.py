@@ -28,9 +28,11 @@ class Buffer:
     
     def push(self, packet: Packet):
         # For maintianing naming convention
+        if self._debug == True:
+            print(f"buffer: pushing into {self._name} buffer with current length {len(self.buffer)}")
         return self.enqueue_packet(packet)
 
-    def pop(self,):
+    def pop(self):
         # For maintianing naming convention
         return self.dequeue_packet()
 
@@ -40,6 +42,7 @@ class Buffer:
             # can enqueue this packet into the buffer.
             self.buffer.append(packet)
             self._buffer_pointer += 1
+            # print(self.buffer)
             return True
         elif self._buffer_pointer >= self._get_buffer_size():
             if self._debug == True:

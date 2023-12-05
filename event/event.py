@@ -155,8 +155,12 @@ class EventV3:
         status = [True, None]
         if self._command == "push":
             status[0] = self._buffer.push(self._packet)
+            if self._debug == True and status[0] == True:
+                print(f"event: pushed into {self._buffer._name} buffer with length {len(self._buffer.buffer)}")
         elif self._command == "pop":
             status[0] = self._buffer.pop()
+            if self._debug == True and status[0] == True:
+                print(f"event: popped from {self._buffer._name} buffer with length {len(self._buffer.buffer)}")
         return status
         
     
