@@ -34,9 +34,10 @@ def main(ticks_resolution: int, sender: Buffer, receiver: Buffer,
     # The simulator has to atleast simulate these packets. we can add a live
     # traffic source if we want too.
     interpacket_arrival_times = np.sort(encoder.get_traffic_delay())
-    
+    # we might need to adjust the ticks_resolutions.
     interpacket_arrival_times = process_time_arrays(interpacket_arrival_times,
-                                        ticks_resolution * 10)
+                                        ticks_resolution, length)
+
     if debug == True:
         print(encoder.get_stats())
         print(interpacket_arrival_times)
@@ -47,28 +48,37 @@ def main(ticks_resolution: int, sender: Buffer, receiver: Buffer,
     
     # The simulator will always have the first packet at time t = 0
     simulator = Simulator(clock_resolution=ticks_resolution,
-                          buffers=[alice_buffer, bob_buffer], buffer_limit=buffer_limit,
+                          buffers=[alice_buffer, bob_buffer],
+                          buffer_limit=buffer_limit,
                           debug=False)
+    
+    # The packets sent by the application will be enqueued into the buffer at
+    # interpacket arrival times. this will be simulated.
     simulator.set_packet_stream(encoded_message, interpacket_arrival_times)
+    # This is for the bonus question. the user can generate live traffic
+    # after every n time units. these will be enqueued by the simulator.
     if live_traffic["value"] == True:
         simulator.set_live_traffic(period=live_traffic["value"],
                                    traffic_type=live_traffic["type"])
     
     if debug == True:
-        print("info: expected times: ", encoded_message[buffer_limit - 1].enqueue_time , end = " ")
+        # Using this to debug whether out implementation is correct or not.
+        print("info: expected times: ",
+              encoded_message[buffer_limit - 1].enqueue_time , end = " ")
         s = encoded_message[buffer_limit - 1].enqueue_time
         for i in range(length):
             s +=  encoded_message[i].process_time
             print(s, end =  " ")
         print()
     
-    # We start the simulator here.
+    # We start the simulator here. we add the first packet from the packet
+    # stream so that the event queue in the simulator can start progressing.
     simulator.pre_simulate()
+    # here goes nothing!
     simulator.simulate()
-    # print(simulator.simulation_stats)
-    return simulator.simulation_stats
-    # print(simulator.simulation_stats)
-    
+    # each simulation instance has it's own result set. time does not reset if
+    # simulator object is not destroyed!
+    return simulator.simulation_stats  
 ###############################################################################
 
 if __name__ == "__main__":
@@ -80,25 +90,34 @@ if __name__ == "__main__":
     buffer_length = 20
     buffer_limit_i = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]
     iterations = 100
+    message_length = 32
 
     for buffer_limit in buffer_limit_i:
         overflow_count = 0
         underflow_count = 0
-        for i in range(iterations):   
-            alice_buffer = Buffer(buffer_name="alice buffer", buffer_size=buffer_length)
-            bob_buffer = Buffer(buffer_name="bob buffer", buffer_size=200) 
-            sim = main(ticks_resolution=simulation_precision, sender=alice_buffer,
-                receiver=bob_buffer, iterations=iterations, buffer_limit=buffer_limit,
-                secret=message, debug = False)
-            
-            if sim["status"] == False:
-                if "overflow" in sim["error"]:
-                    overflow_count += 1
-                elif "underflow" in sim["error"]:
-                    underflow_count += 1
+        for i in range(iterations):
+            if buffer_limit < message_length:
+                alice_buffer = Buffer(buffer_name="alice buffer",
+                                      buffer_size=buffer_length)
+                bob_buffer = Buffer(buffer_name="bob buffer", buffer_size=200) 
+                sim = main(ticks_resolution=simulation_precision,
+                           sender=alice_buffer,
+                           receiver=bob_buffer,
+                           iterations=iterations,
+                           buffer_limit=buffer_limit,
+                           secret=message,
+                           length=message_length,
+                           debug = False)
+                
+                if sim["status"] == False:
+                    if "overflow" in sim["error"]:
+                        overflow_count += 1
+                    elif "underflow" in sim["error"]:
+                        underflow_count += 1
         print("iterations", iterations,
-              "M", buffer_length,
-              "i", buffer_limit,
-              "success", float(iterations - underflow_count - overflow_count) * 100.0/iterations,
-              "underflow", float(underflow_count) * 100.0/iterations,
-              "overflow", float(overflow_count) * 100.0/iterations)
+            "B", buffer_length,
+            "i", buffer_limit,
+            "success",
+            float(iterations - underflow_count - overflow_count) * 100.0/iterations,
+            "underflow", float(underflow_count) * 100.0/iterations,
+            "overflow", float(overflow_count) * 100.0/iterations)

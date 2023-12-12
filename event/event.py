@@ -143,6 +143,7 @@ class EventV3:
         self._debug = debug
         self._command = command
         self._buffer = buffer
+        self._recv = recv
     
     def __del__(self):
         # This event shoulf be deleted at end time. if not, then crash this

@@ -13,6 +13,7 @@ class Simulator:
         self._clock = clock_resolution
         self._sender = buffers[0]
         self._receiver = buffers[1]
+        self._internetwork_delay = 20
         # There is an initial event at t = 0 that starts the communication.
         # initial_event = EventV3(idx=-1,
         #                             command="comm",
@@ -268,6 +269,15 @@ class Simulator:
                             self.simulation_stats["error"] = "overflow"
                         else:
                             self.simulation_stats["error"] = "i underflow"
+                    else:
+                        # if this was a pop event, create a new entry in the
+                        # recv's buffer to simulate the entire communication.
+                        # TODO: make the internetwork delay as a new event to
+                        # be pushed at the right time
+                        _temporary_packet = Packet(
+                            pkt_idx=-100,
+                            enqueue_time=current_tick + self._internetwork_delay)
+                        self._receiver.push(_temporary_packet)
                     self.event_queue.remove(events)
                 if self.simulation_stats["status"] == False:
                     break
