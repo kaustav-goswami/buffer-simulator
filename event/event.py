@@ -151,6 +151,11 @@ class EventV3:
         if self._debug == True:
             print("event:", self._idx, "event deleted!")
     
+    def process_event(self, gambler_name):
+        # this adds a new logic to map the gambler's ruin problem.
+        old_status = self.process_event()
+        return old_status
+    
     def process_event(self):
         # overrides older process_Events
         status = [True, None]
