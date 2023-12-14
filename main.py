@@ -14,18 +14,35 @@ def test_driver():
     test_encoder()
 
 ###############################################################################
-def main(ticks_resolution: int, sender: Buffer, receiver: Buffer,
-         iterations: int, length = 32, buffer_limit = 1,
+def main(ticks_resolution: int,
+         sender: Buffer,
+         receiver: Buffer,
+         iterations: int,
+         length = 32,
+         buffer_limit = 1,
          live_traffic = {"value": False, "period": 0, "type": "exponential"},
-         secret = None, debug = True):
+         secret = None,
+         traffic_type="exponential",
+         debug = True):
     # Generate a random message.
     secret_message = secret[:length]
     # the simulator module needs to create packets based on this information
     # of the secret packet.
-    encoder = EncoderV2(name="updated encoder", traffic_type="Exponential",
-                        length=len(secret_message), params={"lambda": 1},
-                        simulator_quantum=ticks_resolution,
-                        message=secret_message)
+    encoder = None
+    if traffic_type == "exponential":
+        encoder = EncoderV2(name="updated encoder", traffic_type="Exponential",
+                            length=len(secret_message), params={"lambda": 1},
+                            simulator_quantum=ticks_resolution,
+                            message=secret_message)
+    elif traffic_type == "uniform":
+        encoder = EncoderV2(name="updated encoder", traffic_type="Uniform",
+                            length=len(secret_message), params={"low": 0,
+                                                                "high": 1},
+                            simulator_quantum=ticks_resolution,
+                            message=secret_message)
+    else:
+        print("fatal! traffic type not supported!")
+        exit(-1)
     # the incorrect assumption that i had was that we pushg these packets into
     # the buffer and wait for process_time to pop. however, these packets are
     # already processed. we just need to push them into the buffer and then
@@ -36,7 +53,7 @@ def main(ticks_resolution: int, sender: Buffer, receiver: Buffer,
     interpacket_arrival_times = np.sort(encoder.get_traffic_delay())
     # we might need to adjust the ticks_resolutions.
     interpacket_arrival_times = process_time_arrays(interpacket_arrival_times,
-                                        ticks_resolution, length)
+                                        ticks_resolution * 10, traffic_type, length)
 
     if debug == True:
         print(encoder.get_stats())
@@ -91,6 +108,7 @@ if __name__ == "__main__":
     buffer_limit_i = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]
     iterations = 100
     message_length = 32
+    traffic_type = "uniform"
 
     for buffer_limit in buffer_limit_i:
         overflow_count = 0
@@ -107,6 +125,7 @@ if __name__ == "__main__":
                            buffer_limit=buffer_limit,
                            secret=message,
                            length=message_length,
+                           traffic_type=traffic_type,
                            debug = False)
                 
                 if sim["status"] == False:
