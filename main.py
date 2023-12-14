@@ -108,7 +108,7 @@ if __name__ == "__main__":
     buffer_limit_i = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]
     iterations = 100
     message_length = 32
-    traffic_type = "uniform"
+    traffic_type = "exponential"
 
     for buffer_limit in buffer_limit_i:
         overflow_count = 0
