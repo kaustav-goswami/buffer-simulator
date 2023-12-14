@@ -8,12 +8,13 @@ class Simulator:
                  clock_resolution: int,
                  buffers: List[Buffer],
                  buffer_limit: int,
+                 network_delay = 0,
                  timeout = 5000,
                  debug=False):
         self._clock = clock_resolution
         self._sender = buffers[0]
         self._receiver = buffers[1]
-        self._internetwork_delay = 20
+        self._internetwork_delay = network_delay
         # There is an initial event at t = 0 that starts the communication.
         # initial_event = EventV3(idx=-1,
         #                             command="comm",

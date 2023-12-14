@@ -22,6 +22,7 @@ def main(ticks_resolution: int,
          buffer_limit = 1,
          live_traffic = {"value": False, "period": 0, "type": "exponential"},
          secret = None,
+         network_delay=0,
          traffic_type="exponential",
          debug = True):
     # Generate a random message.
@@ -52,8 +53,11 @@ def main(ticks_resolution: int,
     # traffic source if we want too.
     interpacket_arrival_times = np.sort(encoder.get_traffic_delay())
     # we might need to adjust the ticks_resolutions.
+    adjusted_res = ticks_resolution
+    if traffic_type == "uniform":
+        adjusted_res = ticks_resolution * 10
     interpacket_arrival_times = process_time_arrays(interpacket_arrival_times,
-                                        ticks_resolution * 10, traffic_type, length)
+                                        adjusted_res, traffic_type, length)
 
     if debug == True:
         print(encoder.get_stats())
@@ -67,6 +71,7 @@ def main(ticks_resolution: int,
     simulator = Simulator(clock_resolution=ticks_resolution,
                           buffers=[alice_buffer, bob_buffer],
                           buffer_limit=buffer_limit,
+                          network_delay=network_delay,
                           debug=False)
     
     # The packets sent by the application will be enqueued into the buffer at
@@ -109,6 +114,7 @@ if __name__ == "__main__":
     iterations = 100
     message_length = 32
     traffic_type = "exponential"
+    network_delay = 0
 
     for buffer_limit in buffer_limit_i:
         overflow_count = 0
@@ -124,6 +130,7 @@ if __name__ == "__main__":
                            iterations=iterations,
                            buffer_limit=buffer_limit,
                            secret=message,
+                           network_delay=network_delay,
                            length=message_length,
                            traffic_type=traffic_type,
                            debug = False)
