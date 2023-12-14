@@ -53,7 +53,7 @@ def main(ticks_resolution: int,
     interpacket_arrival_times = np.sort(encoder.get_traffic_delay())
     # we might need to adjust the ticks_resolutions.
     interpacket_arrival_times = process_time_arrays(interpacket_arrival_times,
-                                        ticks_resolution * 10, traffic_type, length)
+                                        ticks_resolution, traffic_type, length)
 
     if debug == True:
         print(encoder.get_stats())
@@ -108,9 +108,9 @@ if __name__ == "__main__":
     buffer_limit_i = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18]
     iterations = 100
     message_length = 32
-    traffic_type = "uniform"
+    traffic_type = "exponential"
 
-    for buffer_limit in buffer_limit_i:
+    for idx, buffer_limit in enumerate(buffer_limit_i):
         overflow_count = 0
         underflow_count = 0
         for i in range(iterations):
@@ -133,10 +133,12 @@ if __name__ == "__main__":
                         overflow_count += 1
                     elif "underflow" in sim["error"]:
                         underflow_count += 1
-        print("iterations", iterations,
-            "B", buffer_length,
-            "i", buffer_limit,
-            "success",
-            float(iterations - underflow_count - overflow_count) * 100.0/iterations,
-            "underflow", float(underflow_count) * 100.0/iterations,
-            "overflow", float(overflow_count) * 100.0/iterations)
+        if buffer_limit < buffer_length:
+            print(str(idx + 1) + ".",
+                "iterations", iterations,
+                "B", buffer_length,
+                "i", buffer_limit,
+                "undecisive",
+                float(iterations - underflow_count - overflow_count) * 100.0/iterations,
+                "A wins (underflow)", float(underflow_count) * 100.0/iterations,
+                "B wins (overflow)", float(overflow_count) * 100.0/iterations)
